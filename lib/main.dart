@@ -27,8 +27,15 @@ class _HomeState extends State<Home> {
     todoList.add(Todo(title: "comprar ]ekgp", isCheck: false));
     todoList.add(Todo(title: "comprar dmnefgwpnycex", isCheck: false));
 
-
   }
+  TextEditingController _controllerActionButton = TextEditingController(); 
+  void add() { 
+    setState(() {
+      todoList.add(Todo(title:_controllerActionButton.text, isCheck: false));
+      Navigator.of(context).pop();
+      _controllerActionButton.text = ""; 
+    });
+   }
 
  bool changeCheckBox(bool checkState) {
    print(!checkState);
@@ -121,7 +128,36 @@ class _HomeState extends State<Home> {
             
           },
         ),
+
       ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add_circle),
+        onPressed: (){
+        showDialog(
+              context: context,
+              builder:  (BuildContext context) {
+                
+                  return AlertDialog(
+                    title: new Text("Adicione um item"),
+                    content: TextField(
+                            controller: _controllerActionButton,
+                          ),
+                    actions: <Widget>[
+                      RaisedButton(
+                        child: Text("Confirmar"),
+                        onPressed: add,
+                      ),
+                      RaisedButton(
+                        child: new Text("Cancelar"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+              },
+            );
+      }),
     );
   }
 }
