@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/model/todo.dart';
+import 'package:todo_list/model/my_database.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -18,20 +19,29 @@ class Home extends StatefulWidget {
 
 
 class _HomeState extends State<Home> {
-    var todoList = new List<Todo>();
-  _HomeState(){
-    todoList = [];
-    todoList.add(Todo(title: "comprar cleitin", isCheck: false));
-    todoList.add(Todo(title: "comprar wlejgt", isCheck: false));
-    todoList.add(Todo(title: "comprar çwg", isCheck: false));
-    todoList.add(Todo(title: "comprar ]ekgp", isCheck: false));
-    todoList.add(Todo(title: "comprar dmnefgwpnycex", isCheck: false));
+  final dbHelper = DatabaseHelper.instance;
+   Future<List<Todo>> _query() async {
+      List<Map <String, dynamic>> allRows = [];
+      allRows = await dbHelper.queryAllRows();
+
+      return List.generate(allRows.length, (i) {
+        return Todo(
+          title: allRows[i]['title'],
+          isCheck: allRows[i]['done'],
+        );
+      });
+  }
+  Future<List<Todo>> todoList;
+
+  _HomeState() {
+    todoList = _query();
 
   }
+
   TextEditingController _controllerActionButton = TextEditingController(); 
   void add() { 
     setState(() {
-      todoList.add(Todo(title:_controllerActionButton.text, isCheck: false));
+      // todoList.add(Todo(title:_controllerActionButton.text, isCheck: false));
       Navigator.of(context).pop();
       _controllerActionButton.text = ""; 
     });
@@ -46,11 +56,15 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(title: Text("Todo List")),
       body: Container(
-        child: ListView.builder(
+        child: FutureBuilder(
+          future: todoList,
+
+        builder: (context, snapshot) {
+          return ListView.builder(
           scrollDirection: Axis.vertical,
-          itemCount: todoList.length,
+          itemCount: (snapshot.data==[])?0:snapshot.data.length,
           itemBuilder: (BuildContext context, int index) {
-            final item = todoList[index];
+            final item = snapshot.data[index];
             return Dismissible(
               background: Container(
                 alignment: Alignment.centerLeft,
@@ -83,7 +97,7 @@ class _HomeState extends State<Home> {
                               child: Text("Confirmar"),
                               onPressed: (){
                                 setState(() {
-                                  todoList[index].title=  _controller.text;
+                                  // todoList[index].title=  _controller.text;
                                   Navigator.of(context).pop();
                                 });
                               }
@@ -101,7 +115,7 @@ class _HomeState extends State<Home> {
                 } else if(direction == DismissDirection.startToEnd){
                   Scaffold.of(context).showSnackBar(SnackBar(content: Text("Swipe to right")));
                   setState(() {
-                    todoList.removeAt(index);
+                    // todoList.removeAt(index);
                     print(todoList);
                   });
                 }
@@ -111,15 +125,15 @@ class _HomeState extends State<Home> {
                     .showSnackBar(SnackBar(content: Text("${item.title} Removido")));
               },
               child: ListTile(
-                title: Text(todoList[index].title),
+                title: Text(snapshot.data[index].title),
                 onTap: (){
                   setState(() {
-                    todoList[index].isCheck = !todoList[index].isCheck;
+                    snapshot.data[index].isCheck = !snapshot.data[index].isCheck;
                   });
                   
                 },
                 trailing: Checkbox(
-                  value: todoList[index].isCheck,
+                  value: (snapshot.data[index]==null)?snapshot.data[index].isCheck:false,
                   onChanged: null,
                 )
               )
@@ -127,8 +141,9 @@ class _HomeState extends State<Home> {
             
             
           },
+        );
+}
         ),
-
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add_circle),
@@ -161,4 +176,3 @@ class _HomeState extends State<Home> {
     );
   }
 }
-
