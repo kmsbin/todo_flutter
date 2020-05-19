@@ -21,21 +21,45 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final dbHelper = DatabaseHelper.instance;
    Future<List<Todo>> _query() async {
+    final db = DatabaseHelper.instance;
       List<Map <String, dynamic>> allRows = [];
-      allRows = await dbHelper.queryAllRows();
+      allRows = await db.queryAllRows();
 
       return List.generate(allRows.length, (i) {
+        print(allRows);
         return Todo(
+          id: allRows[i]['_id'],
           title: allRows[i]['title'],
           isCheck: allRows[i]['done'],
         );
       });
   }
-  Future<List<Todo>> todoList;
-
+  List<Todo> todoList;
+  _setTodo (value){
+    todoList = value;
+    print(" lista -------- $todoList");
+  } 
   _HomeState() {
-    todoList = _query();
+    _query().then((value) {
+      setState((){
+      _setTodo(value);
+      });
+    });
 
+  }
+  _delete(int id) async{
+    final db = DatabaseHelper.instance;
+    await db.delete(id);
+    // .then((value) {
+    //   print(value);
+    //   setState(() {
+    //     _query().then((value) {
+    //       setState(() {
+    //         _setTodo(value);
+    //       });
+    //       });
+    //   });
+    // });
   }
 
   TextEditingController _controllerActionButton = TextEditingController(); 
@@ -56,15 +80,11 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(title: Text("Todo List")),
       body: Container(
-        child: FutureBuilder(
-          future: todoList,
-
-        builder: (context, snapshot) {
-          return ListView.builder(
+        child: ListView.builder(
           scrollDirection: Axis.vertical,
-          itemCount: (snapshot.data==[])?0:snapshot.data.length,
+          itemCount: (todoList==null)?0:todoList.length,
           itemBuilder: (BuildContext context, int index) {
-            final item = snapshot.data[index];
+            final item = todoList[index];
             return Dismissible(
               background: Container(
                 alignment: Alignment.centerLeft,
@@ -114,10 +134,7 @@ class _HomeState extends State<Home> {
                   );
                 } else if(direction == DismissDirection.startToEnd){
                   Scaffold.of(context).showSnackBar(SnackBar(content: Text("Swipe to right")));
-                  setState(() {
-                    // todoList.removeAt(index);
-                    print(todoList);
-                  });
+                    _delete(todoList[index].id);
                 }
 
                 Scaffold
@@ -125,15 +142,15 @@ class _HomeState extends State<Home> {
                     .showSnackBar(SnackBar(content: Text("${item.title} Removido")));
               },
               child: ListTile(
-                title: Text(snapshot.data[index].title),
+                title: Text(todoList[index].title),
                 onTap: (){
                   setState(() {
-                    snapshot.data[index].isCheck = !snapshot.data[index].isCheck;
+                    todoList[index].isCheck = !todoList[index].isCheck;
                   });
                   
                 },
                 trailing: Checkbox(
-                  value: (snapshot.data[index]==null)?snapshot.data[index].isCheck:false,
+                  value: (todoList[index]==null)?todoList[index].isCheck:false,
                   onChanged: null,
                 )
               )
@@ -141,38 +158,38 @@ class _HomeState extends State<Home> {
             
             
           },
-        );
+        )));
 }
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add_circle),
-        onPressed: (){
-        showDialog(
-              context: context,
-              builder:  (BuildContext context) {
+        
+//       ),
+//       floatingActionButton: FloatingActionButton(
+//         child: Icon(Icons.add_circle),
+//         onPressed: (){
+//         showDialog(
+//               context: context,
+//               builder:  (BuildContext context) {
                 
-                  return AlertDialog(
-                    title: new Text("Adicione um item"),
-                    content: TextField(
-                            controller: _controllerActionButton,
-                          ),
-                    actions: <Widget>[
-                      RaisedButton(
-                        child: Text("Confirmar"),
-                        onPressed: add,
-                      ),
-                      RaisedButton(
-                        child: new Text("Cancelar"),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-              },
-            );
-      }),
-    );
+//                   return AlertDialog(
+//                     title: new Text("Adicione um item"),
+//                     content: TextField(
+//                             controller: _controllerActionButton,
+//                           ),
+//                     actions: <Widget>[
+//                       RaisedButton(
+//                         child: Text("Confirmar"),
+//                         onPressed: add,
+//                       ),
+//                       RaisedButton(
+//                         child: new Text("Cancelar"),
+//                         onPressed: () {
+//                           Navigator.of(context).pop();
+//                         },
+//                       ),
+//                     ],
+//                   );
+//               },
+//             );
+//       }),
+//     );
+//   }
   }
-}
