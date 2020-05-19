@@ -35,6 +35,7 @@ class _HomeState extends State<Home> {
       });
   }
   List<Todo> todoList;
+
   _setTodo (value){
     todoList = value;
     print(" lista -------- $todoList");
@@ -50,25 +51,26 @@ class _HomeState extends State<Home> {
   _delete(int id) async{
     final db = DatabaseHelper.instance;
     await db.delete(id);
-    // .then((value) {
-    //   print(value);
-    //   setState(() {
-    //     _query().then((value) {
-    //       setState(() {
-    //         _setTodo(value);
-    //       });
-    //       });
-    //   });
-    // });
   }
 
   TextEditingController _controllerActionButton = TextEditingController(); 
-  void add() { 
-    setState(() {
-      // todoList.add(Todo(title:_controllerActionButton.text, isCheck: false));
-      Navigator.of(context).pop();
-      _controllerActionButton.text = ""; 
+
+  void add({String title, bool isChecked}) { 
+    Map<String, dynamic> row = {
+      DatabaseHelper.columnTitle : title,
+      DatabaseHelper.columnIsChecked : isChecked
+    };
+    dbHelper.insert(row).then((gs) {
+      _query()
+        .then((value) {
+          setState(() {
+            _setTodo(value);
+          });
+      });
     });
+
+
+    Navigator.of(context).pop();
    }
 
  bool changeCheckBox(bool checkState) {
@@ -80,7 +82,9 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(title: Text("Todo List")),
       body: Container(
-        child: ListView.builder(
+        child: 
+
+        ListView.builder(
           scrollDirection: Axis.vertical,
           itemCount: (todoList==null)?0:todoList.length,
           itemBuilder: (BuildContext context, int index) {
@@ -158,38 +162,41 @@ class _HomeState extends State<Home> {
             
             
           },
-        )));
-}
+        ),
         
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         child: Icon(Icons.add_circle),
-//         onPressed: (){
-//         showDialog(
-//               context: context,
-//               builder:  (BuildContext context) {
+      
+    ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: (){
+        showDialog(
+              context: context,
+              builder:  (BuildContext context) {
                 
-//                   return AlertDialog(
-//                     title: new Text("Adicione um item"),
-//                     content: TextField(
-//                             controller: _controllerActionButton,
-//                           ),
-//                     actions: <Widget>[
-//                       RaisedButton(
-//                         child: Text("Confirmar"),
-//                         onPressed: add,
-//                       ),
-//                       RaisedButton(
-//                         child: new Text("Cancelar"),
-//                         onPressed: () {
-//                           Navigator.of(context).pop();
-//                         },
-//                       ),
-//                     ],
-//                   );
-//               },
-//             );
-//       }),
-//     );
-//   }
+                  return AlertDialog(
+                    title: new Text("Adicione um item"),
+                    content: TextField(
+                            controller: _controllerActionButton,
+                          ),
+                    actions: <Widget>[
+                      RaisedButton(
+                        child: Text("Confirmar"),
+                        onPressed: (){
+                          add(title: _controllerActionButton.text, isChecked: false);
+                        },
+                      ),
+                      RaisedButton(
+                        child: new Text("Cancelar"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+              },
+            );
+      }
+      )
+    );
   }
+}
