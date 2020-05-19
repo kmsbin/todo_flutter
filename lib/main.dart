@@ -26,7 +26,6 @@ class _HomeState extends State<Home> {
       allRows = await db.queryAllRows();
 
       return List.generate(allRows.length, (i) {
-        print(allRows);
         return Todo(
           id: allRows[i]['_id'],
           title: allRows[i]['title'],
@@ -48,6 +47,25 @@ class _HomeState extends State<Home> {
     });
 
   }
+  void _update({num id, String title, bool isChecked}) async{
+    print(id);
+    Map<String, dynamic> row = {
+      DatabaseHelper.columnTitle : title,
+      DatabaseHelper.columnId : id,
+      DatabaseHelper.columnIsChecked : 0
+    };
+    await dbHelper.update(row, id)
+    .then((gs) {
+      print(gs);
+      _query()
+        .then((value) {
+          setState(() {
+            _setTodo(value);
+          });
+      });
+    });
+
+  }
   _delete(int id) async{
     final db = DatabaseHelper.instance;
     await db.delete(id);
@@ -58,7 +76,7 @@ class _HomeState extends State<Home> {
   void add({String title, bool isChecked}) { 
     Map<String, dynamic> row = {
       DatabaseHelper.columnTitle : title,
-      DatabaseHelper.columnIsChecked : isChecked
+      DatabaseHelper.columnIsChecked : 0
     };
     dbHelper.insert(row).then((gs) {
       _query()
@@ -120,10 +138,16 @@ class _HomeState extends State<Home> {
                             RaisedButton(
                               child: Text("Confirmar"),
                               onPressed: (){
+                                print(todoList[index].id);
+                                _update(
+                                  title: _controller.text, 
+                                  id: todoList[index].id, 
+                                  isChecked: todoList[index].isCheck
+                                );
                                 setState(() {
-                                  // todoList[index].title=  _controller.text;
-                                  Navigator.of(context).pop();
+                                  _controller.text = "";
                                 });
+                                  Navigator.of(context).pop();
                               }
                             ),
                             RaisedButton(
@@ -137,13 +161,9 @@ class _HomeState extends State<Home> {
                     },
                   );
                 } else if(direction == DismissDirection.startToEnd){
-                  Scaffold.of(context).showSnackBar(SnackBar(content: Text("Swipe to right")));
+                  Scaffold.of(context).showSnackBar(SnackBar(content: Text("${item.title} to right")));
                     _delete(todoList[index].id);
                 }
-
-                Scaffold
-                    .of(context)
-                    .showSnackBar(SnackBar(content: Text("${item.title} Removido")));
               },
               child: ListTile(
                 title: Text(todoList[index].title),
